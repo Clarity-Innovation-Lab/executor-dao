@@ -146,8 +146,8 @@ Clarinet.test({
     const block = utils.passProposal(0, chain, accounts, contractEDP001)
     exeDaoClient.isExtension(contractEDE005).result.expectBool(true)
 
-    let oneMonth = 4380
-    let bh = block.height
+    const oneMonth = 4380
+    const bh = block.height
     let newHeight = 0
 
     for (let i=1; i < 21; i++) {
@@ -182,6 +182,7 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(EDE005DevFundErrCode.err_no_allowance)
   }
 });
+
 Clarinet.test({
   name: "Ensure developer can be removed from dev fund",
   fn(chain: Chain, accounts: Map<string, Account>) {
