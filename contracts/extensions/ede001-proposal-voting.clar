@@ -118,7 +118,7 @@
 				(merge proposal-data {votes-against: (+ (get votes-against proposal-data) amount)})
 			)
 		)
-		(print {event: "vote", proposal: proposal, voter: voter, for: for, amount: amount})
+		(print {event: "vote", proposal: proposal, voter: voter, delegate: (if (is-none delegator) none (some tx-sender)), for: for, amount: amount})
 		(contract-call? governance-token edg-lock amount voter)
 	)
 )
