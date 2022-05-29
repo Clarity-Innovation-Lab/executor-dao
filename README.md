@@ -39,7 +39,7 @@ Implements a SIP010 governance token with locking capabilities. The DAO has full
 
 ### EDE001: Proposal Voting
 
-Allows governance token holders to vote on proposals. (Note: *vote*, not *propose*.) One token equals one vote. Tokens used for voting are locked for the duration of the vote. They can then be reclaimed and used again. 
+Allows governance token holders to vote on proposals. (Note: *vote*, not *propose*.) One token equals one vote. Tokens used for voting are locked for the duration of the vote. They can then be reclaimed and used again. Token holders may also delegate their voting power to another principal who can then act on their behalf until that right is explicitly revoked.
 
 ### EDE002: Proposal Submission
 
