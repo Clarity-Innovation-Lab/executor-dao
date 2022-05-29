@@ -9,7 +9,10 @@
 ;; passes. Any token holder may vote on an open proposal, where one token equals
 ;; one vote. Members can vote until the voting period is over. After this period
 ;; anyone may trigger a conclusion. The proposal will then be executed if the
-;; votes in favour exceed the ones against.
+;; votes in favour exceed the ones against. Members can also delegate their
+;; voting power to another principal. The delegate may then vote on the
+;; delegator's behalf until the right is explicitly revoked. Delegation does not
+;; move tokens or change ownership.
 
 (impl-trait .extension-trait.extension-trait)
 (use-trait proposal-trait .proposal-trait.proposal-trait)
