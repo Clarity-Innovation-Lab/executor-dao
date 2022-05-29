@@ -25,7 +25,7 @@
 (define-constant err-proposal-not-concluded (err u3007))
 (define-constant err-no-votes-to-return (err u3008))
 (define-constant err-end-block-height-not-reached (err u3009))
-(define-constant err-disabled (err u3010))
+(define-constant err-invalid-delegate (err u3010))
 
 (define-data-var governance-token-principal principal .ede000-governance-token)
 
@@ -43,6 +43,8 @@
 )
 
 (define-map member-total-votes {proposal: principal, voter: principal, governance-token: principal} uint)
+
+(define-map delegates principal principal)
 
 ;; --- Authorisation check
 
@@ -96,17 +98,19 @@
 	(default-to u0 (map-get? member-total-votes {proposal: proposal, voter: voter, governance-token: governance-token}))
 )
 
-(define-public (vote (amount uint) (for bool) (proposal principal) (governance-token <governance-token-trait>))
+(define-public (vote (amount uint) (for bool) (proposal principal) (delegator (optional principal)) (governance-token <governance-token-trait>))
 	(let
 		(
 			(proposal-data (unwrap! (map-get? proposals proposal) err-unknown-proposal))
 			(token-principal (contract-of governance-token))
+			(voter (default-to tx-sender delegator))
 		)
 		(try! (is-governance-token governance-token))
+		(asserts! (can-act-on-behalf tx-sender delegator) err-invalid-delegate)
 		(asserts! (>= block-height (get start-block-height proposal-data)) err-proposal-inactive)
 		(asserts! (< block-height (get end-block-height proposal-data)) err-proposal-inactive)
-		(map-set member-total-votes {proposal: proposal, voter: tx-sender, governance-token: token-principal}
-			(+ (get-current-total-votes proposal tx-sender token-principal) amount)
+		(map-set member-total-votes {proposal: proposal, voter: voter, governance-token: token-principal}
+			(+ (get-current-total-votes proposal voter token-principal) amount)
 		)
 		(map-set proposals proposal
 			(if for
@@ -114,8 +118,8 @@
 				(merge proposal-data {votes-against: (+ (get votes-against proposal-data) amount)})
 			)
 		)
-		(print {event: "vote", proposal: proposal, voter: tx-sender, for: for, amount: amount})
-		(contract-call? governance-token edg-lock amount tx-sender)
+		(print {event: "vote", proposal: proposal, voter: voter, for: for, amount: amount})
+		(contract-call? governance-token edg-lock amount voter)
 	)
 )
 
@@ -138,25 +142,41 @@
 
 ;; Reclamation
 
-(define-public (reclaim-votes (proposal <proposal-trait>) (governance-token <governance-token-trait>))
+(define-public (reclaim-votes (proposal <proposal-trait>) (delegator (optional principal)) (governance-token <governance-token-trait>))
 	(let
 		(
 			(proposal-principal (contract-of proposal))
 			(token-principal (contract-of governance-token))
 			(proposal-data (unwrap! (map-get? proposals proposal-principal) err-unknown-proposal))
-			(votes (unwrap! (map-get? member-total-votes {proposal: proposal-principal, voter: tx-sender, governance-token: token-principal}) err-no-votes-to-return))
+			(voter (default-to tx-sender delegator))
+			(votes (unwrap! (map-get? member-total-votes {proposal: proposal-principal, voter: voter, governance-token: token-principal}) err-no-votes-to-return))
 		)
+		(asserts! (can-act-on-behalf tx-sender delegator) err-invalid-delegate)
 		(asserts! (get concluded proposal-data) err-proposal-not-concluded)
-		(map-delete member-total-votes {proposal: proposal-principal, voter: tx-sender, governance-token: token-principal})
-		(contract-call? governance-token edg-unlock votes tx-sender)
+		(map-delete member-total-votes {proposal: proposal-principal, voter: voter, governance-token: token-principal})
+		(contract-call? governance-token edg-unlock votes voter)
 	)
 )
 
-(define-public (reclaim-and-vote (amount uint) (for bool) (proposal principal) (reclaim-from <proposal-trait>) (governance-token <governance-token-trait>))
+(define-public (reclaim-and-vote (amount uint) (for bool) (proposal principal) (delegator (optional principal)) (reclaim-from <proposal-trait>) (governance-token <governance-token-trait>))
 	(begin
-		(try! (reclaim-votes reclaim-from governance-token))
-		(vote amount for proposal governance-token)
+		(try! (reclaim-votes reclaim-from delegator governance-token))
+		(vote amount for proposal delegator governance-token)
 	)
+)
+
+;; --- Delegation
+
+(define-public (delegate (delegatee (optional principal)))
+	(ok (match delegatee inner (map-set delegates tx-sender inner) (map-delete delegates tx-sender)))
+)
+
+(define-read-only (get-delegate (delegator principal))
+	(map-get? delegates delegator)
+)
+
+(define-read-only (can-act-on-behalf (sender principal) (delegator (optional principal)))
+	(match delegator inner (is-eq (map-get? delegates inner) (some sender)) true)
 )
 
 ;; --- Extension callback
