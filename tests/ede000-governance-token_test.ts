@@ -37,7 +37,7 @@ const assertProposal = (
     chain.mineEmptyBlock(startHeight + 1);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, proposal, contractEDE000, bobby.address)
+      ede001ProposalVotingClient.vote(500, true, proposal, '', contractEDE000, bobby.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     
@@ -301,7 +301,7 @@ Clarinet.test({
       chain.mineEmptyBlock(startHeight + 1);
   
       block = chain.mineBlock([
-        ede001ProposalVotingClient.vote(500, true, contractEDP004, contractEDE000, bobby.address)
+        ede001ProposalVotingClient.vote(500, true, contractEDP004, '', contractEDE000, bobby.address)
       ]);
       block.receipts[0].result.expectOk().expectBool(true)
       

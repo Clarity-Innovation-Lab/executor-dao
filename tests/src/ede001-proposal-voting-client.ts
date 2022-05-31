@@ -44,11 +44,11 @@ export class EDE001ProposalVotingClient {
     return this.callReadOnlyFn("get-governance-token", []);
   }
 
-  vote(amount: number, _for: boolean, proposal: string, governanceToken: string, txSender: string): Tx {
+  vote(amount: number, _for: boolean, proposal: string, delegator: string, governanceToken: string, txSender: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "vote",
-      [types.uint(amount), types.bool(_for), types.principal(proposal), types.principal(governanceToken)], txSender);
+      [types.uint(amount), types.bool(_for), types.principal(proposal), (delegator.length > 0) ? types.principal(delegator) : types.none(), types.principal(governanceToken)], txSender);
   }
 
   setGovernanceToken(governanceToken: string, txSender: string): Tx {
@@ -58,18 +58,18 @@ export class EDE001ProposalVotingClient {
       [types.principal(governanceToken)], txSender);
   }
 
-  reclaimAndVote(amount: number, _for: boolean, proposal: string, reclaimFrom: string, governanceToken: string, txSender: string): Tx {
+  reclaimAndVote(amount: number, _for: boolean, proposal: string, delegator: string, reclaimFrom: string, governanceToken: string, txSender: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "reclaim-and-vote",
-      [types.uint(amount), types.bool(_for), types.principal(proposal), types.principal(reclaimFrom), types.principal(governanceToken)], txSender);
+      [types.uint(amount), types.bool(_for), types.principal(proposal), (delegator.length > 0) ? types.principal(delegator) : types.none(), types.principal(reclaimFrom), types.principal(governanceToken)], txSender);
   }
 
-  reclaimVotes(proposal: string, governanceToken: string, txSender: string): Tx {
+  reclaimVotes(proposal: string, delegator: string, governanceToken: string, txSender: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "reclaim-votes",
-      [types.principal(proposal), types.principal(governanceToken)], txSender);
+      [types.principal(proposal), (delegator.length > 0) ? types.principal(delegator) : types.none(), types.principal(governanceToken)], txSender);
   }
 
   conclude(proposal: string, txSender: string): Tx {
