@@ -29,24 +29,41 @@ const getDurations = (blockHeight: number, submissionClient: EDE002ProposalSubmi
   }
 }
     
-  const assertProposal = (
-    concluded: boolean, passed: boolean, votesAgainst: number, votesFor: number, startBlockHeight: number, endBlockHeight: number, proposer: string, 
-    proposal: string, ede001ProposalVotingClient: EDE001ProposalVotingClient): any => {
-    const proposalData = ede001ProposalVotingClient.getProposalData(proposal).result.expectSome().expectTuple()
-    assertEquals(proposalData, 
-    {
-      'order': types.uint(1),
-      'concluded': types.bool(concluded),
-      'passed': types.bool(passed),
-      'votes-against': types.uint(votesAgainst),
-      'votes-for':  types.uint(votesFor),
-      'start-block-height': types.uint(startBlockHeight),
-      'end-block-height': types.uint(endBlockHeight),
-      proposer: proposer
-    });
-  }
-    
-  Clarinet.test({
+const assertProposal = (
+  concluded: boolean, passed: boolean, votesAgainst: number, votesFor: number, startBlockHeight: number, endBlockHeight: number, proposer: string, 
+  proposal: string, ede001ProposalVotingClient: EDE001ProposalVotingClient): any => {
+  const proposalData = ede001ProposalVotingClient.getProposalData(proposal).result.expectSome().expectTuple()
+  assertEquals(proposalData, 
+  {
+    'order': types.uint(2),
+    'concluded': types.bool(concluded),
+    'passed': types.bool(passed),
+    'votes-against': types.uint(votesAgainst),
+    'votes-for':  types.uint(votesFor),
+    'start-block-height': types.uint(startBlockHeight),
+    'end-block-height': types.uint(endBlockHeight),
+    proposer: proposer
+  });
+}
+  
+const assertEmergencyProposal = (
+  concluded: boolean, passed: boolean, votesAgainst: number, votesFor: number, startBlockHeight: number, endBlockHeight: number, proposer: string, 
+  proposal: string, ede001ProposalVotingClient: EDE001ProposalVotingClient): any => {
+  const proposalData = ede001ProposalVotingClient.getProposalData(proposal).result.expectSome().expectTuple()
+  assertEquals(proposalData,
+  {
+    'order': types.uint(1),
+    'concluded': types.bool(concluded),
+    'passed': types.bool(passed),
+    'votes-against': types.uint(votesAgainst),
+    'votes-for':  types.uint(votesFor),
+    'start-block-height': types.uint(startBlockHeight),
+    'end-block-height': types.uint(endBlockHeight),
+    proposer: proposer
+  });
+}
+  
+Clarinet.test({
     name: "Ensure the governance token can't be reset without permission",
     fn(chain: Chain, accounts: Map<string, Account>) {
       const { 
@@ -129,7 +146,7 @@ const getDurations = (blockHeight: number, submissionClient: EDE002ProposalSubmi
       ede003EmergencyProposalsClient.emergencyPropose(contractEDP002, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
-    assertProposal(false, false, 0, 0, (block.height - 1), getDurations(block.height, ede002ProposalSubmissionClient).emergencyEndHeight, phil.address, contractEDP002, ede001ProposalVotingClient)
+    assertEmergencyProposal(false, false, 0, 0, (block.height - 1), getDurations(block.height, ede002ProposalSubmissionClient).emergencyEndHeight, phil.address, contractEDP002, ede001ProposalVotingClient)
 
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
     block = chain.mineBlock([
@@ -176,11 +193,11 @@ Clarinet.test({
       ede003EmergencyProposalsClient.emergencyPropose(contractEDP002, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
-    assertProposal(false, false, 0, 0, (block.height - 1), getDurations(block.height, ede002ProposalSubmissionClient).emergencyEndHeight, phil.address, contractEDP002, ede001ProposalVotingClient)
+    assertEmergencyProposal(false, false, 0, 0, (block.height - 1), getDurations(block.height, ede002ProposalSubmissionClient).emergencyEndHeight, phil.address, contractEDP002, ede001ProposalVotingClient)
     const startHeight = getDurations(block.height, ede002ProposalSubmissionClient).startHeight
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address),
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight + 1, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight + 1, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE002ProposalSubmissionErrCode.err_proposal_minimum_start_delay)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -197,11 +214,11 @@ Clarinet.test({
     ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(500)
     block = chain.mineBlock([
       ede001ProposalVotingClient.vote(500, true, contractEDP003, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(1, true, contractEDP003, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, true, contractEDP003, contractEDE000, bobby.address),
     ]);
-    block.receipts[0].result.expectOk().expectBool(true)
-    block.receipts[1].result.expectErr().expectUint(1)
-    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(1000)
+    block.receipts[0].result.expectErr().expectUint(ExecutorDaoErrCode.err_insufficient_balance)
+    block.receipts[1].result.expectOk().expectBool(true)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(600)
   }
 });
 
@@ -227,7 +244,7 @@ Clarinet.test({
 
     const startHeight = getDurations(block.height, ede002ProposalSubmissionClient).startHeight + 1
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     assertProposal(false, false, 0, 0, (getDurations(block.height, ede002ProposalSubmissionClient).startHeight), getDurations(block.height, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
@@ -253,10 +270,10 @@ Clarinet.test({
   name: "Ensure voting balance reflects two voters voting in opposition.",
   fn(chain: Chain, accounts: Map<string, Account>) {
     const {
-      deployer, 
+      deployer,
       exeDaoClient,
       phil, daisy, bobby,
-      contractEDP000, 
+      contractEDP000,
       contractEDP003,
       contractEDE000,
       ede000GovernanceTokenClient,
@@ -267,7 +284,7 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -278,36 +295,36 @@ Clarinet.test({
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
     ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1000)
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP003, contractEDE000, bobby.address)
+      ede001ProposalVotingClient.vote(5, true, contractEDP003, contractEDE000, bobby.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, false, contractEDP003, contractEDE000, daisy.address)
+      ede001ProposalVotingClient.vote(10, false, contractEDP003, contractEDE000, daisy.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
-    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(500)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(25)
     ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1000)
+    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(100)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(10)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(5)
+    assertProposal(false, false, 10, 5, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
+
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.vote(20, false, contractEDP003, contractEDE000, bobby.address)
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.vote(20, false, contractEDP003, contractEDE000, daisy.address)
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(425)
     ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(500)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(500)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(500)
-    assertProposal(false, false, 500, 500, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
-
-    block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(100, false, contractEDP003, contractEDE000, bobby.address)
-    ]);
-    block.receipts[0].result.expectOk().expectBool(true)
-
-    block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(100, false, contractEDP003, contractEDE000, daisy.address)
-    ]);
-    block.receipts[0].result.expectOk().expectBool(true)
-    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(600)
-    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(600)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(600)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(600)
-    assertProposal(false, false, 700, 500, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(30)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(25)
+    assertProposal(false, false, 50, 5, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
   }
 });
 
@@ -330,8 +347,8 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, bobby.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -343,10 +360,10 @@ Clarinet.test({
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
     ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1000)
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(100, true, contractEDP001, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(100, false, contractEDP003, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(100, true, contractEDP001, contractEDE000, daisy.address),
-      ede001ProposalVotingClient.vote(100, false, contractEDP003, contractEDE000, daisy.address)
+      ede001ProposalVotingClient.vote(10, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, false, contractEDP003, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, true, contractEDP001, contractEDE000, daisy.address),
+      ede001ProposalVotingClient.vote(10, false, contractEDP003, contractEDE000, daisy.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -354,22 +371,22 @@ Clarinet.test({
     block.receipts[3].result.expectOk().expectBool(true)
     ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(200)
     ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(200)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP001, daisy.address, contractEDE000).result.expectUint(100)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP001, bobby.address, contractEDE000).result.expectUint(100)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(100)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(100)
-    assertProposal(false, false, 0, 200, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
-    assertProposal(false, false, 200, 0, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, bobby.address, contractEDP003, ede001ProposalVotingClient)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP001, daisy.address, contractEDE000).result.expectUint(10)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP001, bobby.address, contractEDE000).result.expectUint(10)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, daisy.address, contractEDE000).result.expectUint(10)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP003, bobby.address, contractEDE000).result.expectUint(10)
+    assertProposal(false, false, 0, 20, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(false, false, 20, 0, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, bobby.address, contractEDP003, ede001ProposalVotingClient)
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, false, contractEDP001, contractEDE000, phil.address),
-      ede001ProposalVotingClient.vote(500, false, contractEDP003, contractEDE000, phil.address)
+      ede001ProposalVotingClient.vote(5, false, contractEDP001, contractEDE000, phil.address),
+      ede001ProposalVotingClient.vote(5, false, contractEDP003, contractEDE000, phil.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
-    ede000GovernanceTokenClient.edgGetLocked(phil.address).result.expectOk().expectUint(1000)
-    assertProposal(false, false, 500, 200, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
-    assertProposal(false, false, 700, 0, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, bobby.address, contractEDP003, ede001ProposalVotingClient)
+    ede000GovernanceTokenClient.edgGetLocked(phil.address).result.expectOk().expectUint(50)
+    assertProposal(false, false, 5, 20, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(false, false, 25, 0, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, bobby.address, contractEDP003, ede001ProposalVotingClient)
   }
 });
 
@@ -390,7 +407,7 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     assertProposal(false, false, 0, 0, (getDurations(block.height, ede002ProposalSubmissionClient).startHeight), getDurations(block.height, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
@@ -433,8 +450,8 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
-      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -446,15 +463,17 @@ Clarinet.test({
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
     ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1000)
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(101, true, contractEDP001, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(100, false, contractEDP001, contractEDE000, daisy.address),
-      ede001ProposalVotingClient.vote(100, true, contractEDP003, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(101, false, contractEDP003, contractEDE000, daisy.address)
+      ede001ProposalVotingClient.vote(11, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, false, contractEDP001, contractEDE000, daisy.address),
+      ede001ProposalVotingClient.vote(10, true, contractEDP003, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(11, false, contractEDP003, contractEDE000, daisy.address)
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
     block.receipts[2].result.expectOk().expectBool(true)
     block.receipts[3].result.expectOk().expectBool(true)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(221)
+    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(221)
     
 
     chain.mineEmptyBlock(1585);
@@ -465,8 +484,8 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(false)
 
-    assertProposal(true, true, 100, 101, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
-    assertProposal(true, false, 101, 100, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
+    assertProposal(true, true, 10, 11, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(true, false, 11, 10, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP003, ede001ProposalVotingClient)
   }
 });
 
@@ -481,13 +500,14 @@ Clarinet.test({
       contractEDP001,
       contractEDE000,
       ede001ProposalVotingClient,
-      ede002ProposalSubmissionClient
+      ede002ProposalSubmissionClient,
+      ede000GovernanceTokenClient
     } = utils.setup(chain, accounts)
 
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -496,8 +516,8 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP001, contractEDE000, bobby.address),
-      ede001ProposalVotingClient.vote(500, false, contractEDP001, contractEDE000, daisy.address),
+      ede001ProposalVotingClient.vote(10, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, false, contractEDP001, contractEDE000, daisy.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -508,8 +528,10 @@ Clarinet.test({
       ede001ProposalVotingClient.conclude(contractEDP001, ward.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(false)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(100)
+    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(100)
 
-    assertProposal(true, false, 500, 500, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(true, false, 10, 10, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
   }
 });
 
@@ -530,7 +552,7 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -539,7 +561,7 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(20, true, contractEDP001, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     
@@ -549,11 +571,11 @@ Clarinet.test({
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, 1880, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, 1880, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_proposal_already_executed)
 
-    assertProposal(true, true, 0, 500, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(true, true, 0, 20, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
   }
 });
 
@@ -574,7 +596,7 @@ Clarinet.test({
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -583,12 +605,12 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(20, true, contractEDP001, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, 295, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, 295, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_proposal_already_exists)
   }
@@ -605,13 +627,14 @@ Clarinet.test({
       contractEDP001,
       contractEDE000,
       ede001ProposalVotingClient,
-      ede002ProposalSubmissionClient
+      ede002ProposalSubmissionClient,
+      ede000GovernanceTokenClient
     } = utils.setup(chain, accounts)
 
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -620,12 +643,13 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(30, true, contractEDP001, contractEDE000, bobby.address),
       ede001ProposalVotingClient.reclaimVotes(contractEDP001, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_proposal_not_concluded)
     
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(900)
 
     chain.mineEmptyBlock(1585);
     block = chain.mineBlock([
@@ -633,11 +657,12 @@ Clarinet.test({
       ede001ProposalVotingClient.reclaimVotes(contractEDP001, contractEDE000, bobby.address),
       ede001ProposalVotingClient.reclaimVotes(contractEDP001, contractEDE000, phil.address),
     ]);
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(0)
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
     block.receipts[2].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_no_votes_to_return)
 
-    assertProposal(true, true, 0, 500, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(true, true, 0, 30, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
   }
 });
 
@@ -660,7 +685,7 @@ Clarinet.test({
     let startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP001, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP001, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -669,7 +694,7 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(1000, true, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(10, true, contractEDP001, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     
@@ -677,28 +702,28 @@ Clarinet.test({
     startHeight = getDurations(block.height + 1585, ede002ProposalSubmissionClient).startHeight + 10
     block = chain.mineBlock([
       ede001ProposalVotingClient.conclude(contractEDP001, ward.address),
-      ede002ProposalSubmissionClient.propose(contractEDP002, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP002, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
 
     chain.mineEmptyBlock(152);
-    assertProposal(true, true, 0, 1000, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(true, true, 0, 10, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
     assertProposal(false, false, 0, 0, 1886, 3326, phil.address, contractEDP002, ede001ProposalVotingClient)
     block = chain.mineBlock([
-      ede001ProposalVotingClient.reclaimAndVote(200, true, contractEDP002, contractEDP001, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.reclaimAndVote(20, true, contractEDP002, contractEDP001, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
 
-    assertProposal(true, true, 0, 1000, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
-    assertProposal(false, false, 0, 200, 1886, 3326, phil.address, contractEDP002, ede001ProposalVotingClient)
+    assertProposal(true, true, 0, 10, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(false, false, 0, 20, 1886, 3326, phil.address, contractEDP002, ede001ProposalVotingClient)
 
     ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(1000)
-    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(200)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(400)
     ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP001, bobby.address, contractEDE000).result.expectUint(0)
-    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP002, bobby.address, contractEDE000).result.expectUint(200)
-    assertProposal(true, true, 0, 1000, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
-    assertProposal(false, false, 0, 200, 1886, 3326, phil.address, contractEDP002, ede001ProposalVotingClient)
+    ede001ProposalVotingClient.getCurrentTotalVotes(contractEDP002, bobby.address, contractEDE000).result.expectUint(20)
+    assertProposal(true, true, 0, 10, (getDurations(2, ede002ProposalSubmissionClient).startHeight), getDurations(2, ede002ProposalSubmissionClient).endHeight, phil.address, contractEDP001, ede001ProposalVotingClient)
+    assertProposal(false, false, 0, 20, 1886, 3326, phil.address, contractEDP002, ede001ProposalVotingClient)
   }
 });
 
@@ -715,13 +740,14 @@ Clarinet.test({
       ede001ProposalVotingClient,
       ede002ProposalSubmissionClient,
       ede003EmergencyProposalsClient,
-      ede004EmergencyExecuteClient
+      ede004EmergencyExecuteClient,
+      ede000GovernanceTokenClient
     } = utils.setup(chain, accounts)
 
     const startHeight = getDurations(0, ede002ProposalSubmissionClient).startHeight + 2
     let block = chain.mineBlock([
       exeDaoClient.construct(contractEDP000, deployer.address),
-      ede002ProposalSubmissionClient.propose(contractEDP005, 1, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(contractEDP005, 2, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectOk().expectBool(true)
@@ -730,7 +756,7 @@ Clarinet.test({
     chain.mineEmptyBlock(startHeight);
 
     block = chain.mineBlock([
-      ede001ProposalVotingClient.vote(500, true, contractEDP005, contractEDE000, bobby.address),
+      ede001ProposalVotingClient.vote(5, true, contractEDP005, contractEDE000, bobby.address),
       ede001ProposalVotingClient.reclaimVotes(contractEDP005, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
@@ -740,11 +766,15 @@ Clarinet.test({
 
     ede003EmergencyProposalsClient.isEmergencyTeamMember('ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC').result.expectBool(false)
     ede004EmergencyExecuteClient.getSignalsRequired().result.expectUint(3)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(25)
 
     block = chain.mineBlock([
       ede001ProposalVotingClient.conclude(contractEDP005, ward.address),
+      ede001ProposalVotingClient.reclaimVotes(contractEDP005, contractEDE000, bobby.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
+    block.receipts[1].result.expectOk().expectBool(true)
+    ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(0)
 
     assert(ede001ProposalVotingClient.getGovernanceToken().result === 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.ede000-governance-token-v2')
     assert(ede002ProposalSubmissionClient.getGovernanceToken().result === 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.ede000-governance-token-v2')

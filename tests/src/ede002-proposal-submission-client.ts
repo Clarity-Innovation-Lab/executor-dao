@@ -13,7 +13,8 @@ export enum EDE002ProposalSubmissionErrCode {
   err_insufficient_balance=3102,
   err_unknown_parameter=3103,
   err_proposal_minimum_start_delay=3104,
-  err_proposal_maximum_start_delay=3105
+  err_proposal_maximum_start_delay=3105,
+  err_order_not_supported=3106
 }
 
 export class EDE002ProposalSubmissionClient {
@@ -46,11 +47,11 @@ export class EDE002ProposalSubmissionClient {
       [types.principal(governanceToken)], txSender);
   }
 
-  propose(proposal: string, startBlockHeight: number, governanceToken: string, txSender: string): Tx {
+  propose(proposal: string, order: number, startBlockHeight: number, governanceToken: string, txSender: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "propose",
-      [types.principal(proposal), types.uint(startBlockHeight), types.principal(governanceToken)], txSender);
+      [types.principal(proposal), types.uint(order), types.uint(startBlockHeight), types.principal(governanceToken)], txSender);
   }
 
   private callReadOnlyFn(

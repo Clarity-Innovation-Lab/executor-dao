@@ -25,7 +25,7 @@ Clarinet.test({
 
     const startHeight = block.height + 143
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, startHeight, contractEDE000, phil.address)
+      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address)
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE002ProposalSubmissionErrCode.err_proposal_minimum_start_delay)
   }
@@ -51,7 +51,7 @@ Clarinet.test({
 
     const startHeight = block.height + 2000
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, startHeight, contractEDE000, phil.address)
+      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, phil.address)
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE002ProposalSubmissionErrCode.err_proposal_maximum_start_delay)
   }
@@ -96,7 +96,7 @@ Clarinet.test({
 
     const startHeight = block.height + 200
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, startHeight, contractEDE000_1, deployer.address)
+      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000_1, deployer.address)
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE002ProposalSubmissionErrCode.err_not_governance_token)
   }
@@ -123,8 +123,8 @@ Clarinet.test({
 
     const startHeight = block.height + 200
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(contractEDP003, startHeight, contractEDE000, ward.address),
-      ede002ProposalSubmissionClient.propose(contractEDP003, startHeight, contractEDE000, hunter.address)
+      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, ward.address),
+      ede002ProposalSubmissionClient.propose(contractEDP003, 1, startHeight, contractEDE000, hunter.address)
     ]);
     block.receipts[0].result.expectErr().expectUint(EDE002ProposalSubmissionErrCode.err_insufficient_balance)
     block.receipts[1].result.expectOk().expectBool(true)

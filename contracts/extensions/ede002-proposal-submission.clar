@@ -22,6 +22,7 @@
 (define-constant err-unknown-parameter (err u3103))
 (define-constant err-proposal-minimum-start-delay (err u3104))
 (define-constant err-proposal-maximum-start-delay (err u3105))
+(define-constant err-order-not-supported (err u3106))
 
 (define-data-var governance-token-principal principal .ede000-governance-token)
 
@@ -94,15 +95,17 @@
 
 ;; Proposals
 
-(define-public (propose (proposal <proposal-trait>) (start-block-height uint) (governance-token <governance-token-trait>))
+(define-public (propose (proposal <proposal-trait>) (order uint) (start-block-height uint) (governance-token <governance-token-trait>))
 	(begin
 		(try! (is-governance-token governance-token))
+		(asserts! (< order u3) err-order-not-supported)
 		(asserts! (>= start-block-height (+ block-height (try! (get-parameter "minimum-proposal-start-delay")))) err-proposal-minimum-start-delay)
 		(asserts! (<= start-block-height (+ block-height (try! (get-parameter "maximum-proposal-start-delay")))) err-proposal-maximum-start-delay)
 		(asserts! (try! (contract-call? governance-token edg-has-percentage-balance tx-sender (try! (get-parameter "propose-factor")))) err-insufficient-balance)
 		(contract-call? .ede001-proposal-voting add-proposal
 			proposal
 			{
+				order: order,
 				start-block-height: start-block-height,
 				end-block-height: (+ start-block-height (try! (get-parameter "proposal-duration"))),
 				proposer: tx-sender

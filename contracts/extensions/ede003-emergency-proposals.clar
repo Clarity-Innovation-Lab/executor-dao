@@ -67,6 +67,7 @@
 		(asserts! (< block-height (var-get emergency-team-sunset-height)) err-sunset-height-reached)
 		(contract-call? .ede001-proposal-voting add-proposal proposal
 			{
+				order: u1,
 				start-block-height: block-height,
 				end-block-height: (+ block-height (var-get emergency-proposal-duration)),
 				proposer: tx-sender

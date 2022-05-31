@@ -32,6 +32,7 @@
 (define-map proposals
 	principal
 	{
+		order: uint,
 		votes-for: uint,
 		votes-against: uint,
 		start-block-height: uint,
@@ -63,7 +64,7 @@
 
 ;; Proposals
 
-(define-public (add-proposal (proposal <proposal-trait>) (data {start-block-height: uint, end-block-height: uint, proposer: principal}))
+(define-public (add-proposal (proposal <proposal-trait>) (data {order: uint, start-block-height: uint, end-block-height: uint, proposer: principal}))
 	(begin
 		(try! (is-dao-or-extension))
 		(asserts! (is-none (contract-call? .executor-dao executed-at proposal)) err-proposal-already-executed)
@@ -115,7 +116,7 @@
 			)
 		)
 		(print {event: "vote", proposal: proposal, voter: tx-sender, for: for, amount: amount})
-		(contract-call? governance-token edg-lock amount tx-sender)
+		(contract-call? governance-token edg-lock (pow amount (get order proposal-data)) tx-sender)
 	)
 )
 
@@ -148,7 +149,7 @@
 		)
 		(asserts! (get concluded proposal-data) err-proposal-not-concluded)
 		(map-delete member-total-votes {proposal: proposal-principal, voter: tx-sender, governance-token: token-principal})
-		(contract-call? governance-token edg-unlock votes tx-sender)
+		(contract-call? governance-token edg-unlock (pow votes (get order proposal-data)) tx-sender)
 	)
 )
 

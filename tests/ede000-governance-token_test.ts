@@ -30,7 +30,7 @@ const assertProposal = (
     const propStartDelay = 144
     const startHeight = block.height + propStartDelay
     block = chain.mineBlock([
-      ede002ProposalSubmissionClient.propose(proposal, startHeight, contractEDE000, phil.address),
+      ede002ProposalSubmissionClient.propose(proposal, 1, startHeight, contractEDE000, phil.address),
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
 
@@ -294,7 +294,7 @@ Clarinet.test({
       const propStartDelay = 144
       const startHeight = block.height + propStartDelay
       block = chain.mineBlock([
-        ede002ProposalSubmissionClient.propose(contractEDP004, startHeight, contractEDE000, phil.address),
+        ede002ProposalSubmissionClient.propose(contractEDP004, 1, startHeight, contractEDE000, phil.address),
       ]);
       block.receipts[0].result.expectOk().expectBool(true)
   
