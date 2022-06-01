@@ -20,9 +20,9 @@ export enum EDE001ProposalVotingErrCode {
   err_end_block_height_not_reached=3009,
   err_disabled=3010,
   err_rescinding_more_than_delegated=3011,
-  err_rescinding_more_than_cast=3012
+  err_rescinding_more_than_cast=3012,
+  err_rescind_time_lock_active=3013
 }
-
 export class EDE001ProposalVotingClient {
   contractName = "";
   chain: Chain;

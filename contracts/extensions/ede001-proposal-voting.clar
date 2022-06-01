@@ -28,8 +28,10 @@
 (define-constant err-disabled (err u3010))
 (define-constant err-rescinding-more-than-delegated (err u3011))
 (define-constant err-rescinding-more-than-cast (err u3012))
+(define-constant err-rescind-time-lock-active (err u3013))
 
 (define-data-var governance-token-principal principal .ede000-governance-token)
+(define-data-var rescind-time-lock uint u288) ;; rescind is disabled this many blocks before the end of vote.
 
 (define-map proposals
 	principal
@@ -60,6 +62,13 @@
 	(begin
 		(try! (is-dao-or-extension))
 		(ok (var-set governance-token-principal (contract-of governance-token)))
+	)
+)
+
+(define-public (set-rescind-time-lock (new-rescind-time-lock uint))
+	(begin
+		(try! (is-dao-or-extension))
+		(ok (var-set rescind-time-lock new-rescind-time-lock))
 	)
 )
 
@@ -186,9 +195,11 @@
 			(currently-delegating (unwrap! (contract-call? governance-token edg-get-delegating tx-sender proxy) err-unknown-proposal))
 			(token-principal (contract-of governance-token))
 			(proxy-votes (get-current-votes for proposal proxy token-principal))
+			(time-lock (var-get rescind-time-lock))
 			(votes (min-of amount proxy-votes))
 		)
 		(asserts! (not (get concluded proposal-data)) err-proposal-already-concluded)
+		(asserts! (< block-height (- (get end-block-height proposal-data) time-lock)) err-rescind-time-lock-active)
 		(asserts! (<= votes currently-delegating) err-rescinding-more-than-delegated)
 		(asserts! (> votes u0) err-rescinding-more-than-cast)
 		(map-set member-total-votes {for: for, proposal: proposal, voter: proxy, governance-token: token-principal}

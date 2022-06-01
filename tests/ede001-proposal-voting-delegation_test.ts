@@ -134,16 +134,17 @@ Clarinet.test({
       ede001ProposalVotingClient.rescindVotes(1, true, ward.address, contractEDP003, contractEDE000, daisy.address)
     ]);
     //console.log(block.receipts[3])
-    assert(block.receipts[0].events[0].ft_burn_event.amount == 25)
-    assert(block.receipts[0].events[1].ft_mint_event.amount == 25)
-    assert(block.receipts[0].events[2].ft_transfer_event.amount == 25)
-
-    assertProposal(false, false, 0, 0, 289, 1729, phil.address, contractEDP003, ede001ProposalVotingClient)
     block.receipts[0].result.expectOk().expectUint(25)
     block.receipts[1].result.expectOk().expectUint(25)
     block.receipts[2].result.expectOk().expectUint(25)
     block.receipts[3].result.expectOk().expectUint(225)
     block.receipts[4].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_rescinding_more_than_cast)
+
+    assert(block.receipts[0].events[0].ft_burn_event.amount == 25) 
+    assert(block.receipts[0].events[1].ft_mint_event.amount == 25)
+    assert(block.receipts[0].events[2].ft_transfer_event.amount == 25)
+
+    assertProposal(false, false, 0, 0, 289, 1729, phil.address, contractEDP003, ede001ProposalVotingClient)
 
     ede000GovernanceTokenClient.edgGetTotalDelegated(daisy.address).result.expectOk().expectUint(0)
     ede000GovernanceTokenClient.edgGetTotalDelegated(ward.address).result.expectOk().expectUint(700)
@@ -398,6 +399,79 @@ Clarinet.test({
     ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(400)
     ede000GovernanceTokenClient.edgGetBalance(ward.address).result.expectOk().expectUint(600)
     ede000GovernanceTokenClient.edgGetLocked(ward.address).result.expectOk().expectUint(600)
+  }
+});
+
+Clarinet.test({
+  name: "Ensure voter cant rescind after block height reaches the rescind-time-lock from the end time",
+  fn(chain: Chain, accounts: Map<string, Account>) {
+    const {
+      deployer, 
+      exeDaoClient,
+      phil,
+      daisy,
+      ward,
+      contractEDE000,
+      contractEDP000,
+      contractEDP003, contractEDP004, contractEDP005,
+      ede000GovernanceTokenClient,
+      ede001ProposalVotingClient,
+      ede002ProposalSubmissionClient
+    } = utils.setup(chain, accounts)
+
+    let block = chain.mineBlock([
+      exeDaoClient.construct(contractEDP000, deployer.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+    ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1000)
+    ede000GovernanceTokenClient.edgGetBalance(ward.address).result.expectOk().expectUint(0)
+
+    // proposal-duration=1440
+
+    block = chain.mineBlock([
+      ede002ProposalSubmissionClient.propose(contractEDP003, block.height + 144, contractEDE000, phil.address),
+      ede000GovernanceTokenClient.edgDelegate(500, ward.address, daisy.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+    block.receipts[1].result.expectOk().expectBool(true)
+  
+		chain.mineEmptyBlockUntil(block.height + 144);
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.vote(500, true, contractEDP003, contractEDE000, ward.address)
+    ])
+    console.log(block.height)
+    block.receipts[0].result.expectOk().expectBool(true)
+
+    ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(500)
+    ede000GovernanceTokenClient.edgGetBalance(ward.address).result.expectOk().expectUint(500)
+    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(0)
+    ede000GovernanceTokenClient.edgGetLocked(ward.address).result.expectOk().expectUint(500)
+
+    assertProposal(false, false, 500, 0, 146, 1586, phil.address, contractEDP003, ede001ProposalVotingClient)
+
+		chain.mineEmptyBlockUntil(1586 - 289);
+
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.rescindVotes(10, true, ward.address, contractEDP003, contractEDE000, ward.address),
+      ede001ProposalVotingClient.rescindVotes(10, false, ward.address, contractEDP003, contractEDE000, daisy.address),
+      ede001ProposalVotingClient.rescindVotes(10, true, ward.address, contractEDP003, contractEDE000, daisy.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_rescinding_more_than_delegated)
+    block.receipts[1].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_rescinding_more_than_cast)
+    block.receipts[2].result.expectOk().expectUint(10)
+
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.rescindVotes(10, true, ward.address, contractEDP003, contractEDE000, daisy.address),
+    ])
+    block.receipts[0].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_rescind_time_lock_active)
+    
+    ede000GovernanceTokenClient.edgGetTotalDelegated(daisy.address).result.expectOk().expectUint(0)
+    ede000GovernanceTokenClient.edgGetTotalDelegated(ward.address).result.expectOk().expectUint(490)
+    ede000GovernanceTokenClient.edgGetDelegating(daisy.address, ward.address).result.expectOk().expectUint(490)
+    ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(510)
+    ede000GovernanceTokenClient.edgGetBalance(ward.address).result.expectOk().expectUint(490)
+    ede000GovernanceTokenClient.edgGetLocked(daisy.address).result.expectOk().expectUint(0)
+    ede000GovernanceTokenClient.edgGetLocked(ward.address).result.expectOk().expectUint(490)
   }
 });
 
