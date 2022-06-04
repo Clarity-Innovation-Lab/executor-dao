@@ -8,6 +8,7 @@ import {
 
 export enum EDE000GovernanceTokenErrCode {
   err_unauthorised=3000,
+  err_transfer_is_locked=3001,
   err_not_token_owner=4
 }
 
@@ -65,6 +66,12 @@ export class EDE000GovernanceTokenClient {
       this.contractName,
       "set-token-uri",
       [types.some(types.utf8(value))], txSender);
+  }
+  setTransferLock(lock: boolean, txSender: string): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "set-transfer-lock",
+      [types.bool(lock)], txSender);
   }
   setDecimals(value: number, txSender: string): Tx {
     return Tx.contractCall(

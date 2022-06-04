@@ -13,6 +13,7 @@
 (impl-trait .extension-trait.extension-trait)
 
 (define-constant err-unauthorised (err u3000))
+(define-constant err-transfer-is-locked (err u3001))
 (define-constant err-not-token-owner (err u4))
 
 (define-fungible-token edg-token)
@@ -22,6 +23,7 @@
 (define-data-var token-symbol (string-ascii 10) "EDG")
 (define-data-var token-uri (optional (string-utf8 256)) none)
 (define-data-var token-decimals uint u6)
+(define-data-var transfer-lock bool false)
 
 ;; --- Authorisation check
 
@@ -36,6 +38,7 @@
 (define-public (edg-transfer (amount uint) (sender principal) (recipient principal))
 	(begin
 		(try! (is-dao-or-extension))
+		(asserts! (not (var-get transfer-lock)) err-transfer-is-locked)
 		(ft-transfer? edg-token amount sender recipient)
 	)
 )
@@ -101,6 +104,13 @@
 	)
 )
 
+(define-public (set-transfer-lock (locked bool))
+	(begin
+		(try! (is-dao-or-extension))
+		(ok (var-set transfer-lock locked))
+	)
+)
+
 (define-private (edg-mint-many-iter (item {amount: uint, recipient: principal}))
 	(ft-mint? edg-token (get amount item) (get recipient item))
 )
@@ -119,6 +129,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(begin
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) err-not-token-owner)
+		(asserts! (not (var-get transfer-lock)) err-transfer-is-locked)
 		(ft-transfer? edg-token amount sender recipient)
 	)
 )

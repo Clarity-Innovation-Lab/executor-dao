@@ -23,48 +23,48 @@ export class Utils {
     block.receipts[0].result.expectOk().expectBool(true)
 }
 
-  passProposal = (blockHeight: number, chain: Chain, accounts: Map<string, Account>, proposal: string): any => {
-    const {
-        deployer, 
-        exeDaoClient,
-        phil, bobby, ward,
-        contractEDP000, 
-        contractEDE000,
-        ede001ProposalVotingClient,
-        ede002ProposalSubmissionClient
-      } = utils.setup(chain, accounts)
-  
-      let block = chain.mineBlock([
-        exeDaoClient.construct(contractEDP000, deployer.address),
-      ]);
-      if (blockHeight === 0) block.receipts[0].result.expectOk().expectBool(true)
-  
-      const propStartDelay = 144
-      let startHeight = 1
-      startHeight = block.height + propStartDelay
-      block = chain.mineBlock([
-        ede002ProposalSubmissionClient.propose(proposal, startHeight, contractEDE000, phil.address),
-      ]);
-      block.receipts[0].result.expectOk().expectBool(true)
-  
-      if (blockHeight === 0) chain.mineEmptyBlock(startHeight + 1);
-      else chain.mineEmptyBlock(144);
-      // console.log('Block Height: ' + block.height + ' Start Height: ' + startHeight)
-      
-      block = chain.mineBlock([
-        ede001ProposalVotingClient.vote(500, true, proposal, contractEDE000, bobby.address)
-      ]);
-      block.receipts[0].result.expectOk().expectBool(true)
-      
-      chain.mineEmptyBlock(1585);  
-      block = chain.mineBlock([
-        ede001ProposalVotingClient.conclude(proposal, ward.address)
-      ]);
-      block.receipts[0].result.expectOk().expectBool(true)
-      return block
-  }
-  
-  setup = (chain: Chain, accounts: Map<string, Account>): {
+passProposal = (blockHeight: number, chain: Chain, accounts: Map<string, Account>, proposal: string): any => {
+  const {
+      deployer, 
+      exeDaoClient,
+      phil, bobby, ward,
+      contractEDP000, 
+      contractEDE000,
+      ede001ProposalVotingClient,
+      ede002ProposalSubmissionClient
+    } = utils.setup(chain, accounts)
+
+    let block = chain.mineBlock([
+      exeDaoClient.construct(contractEDP000, deployer.address),
+    ]);
+    if (blockHeight === 0) block.receipts[0].result.expectOk().expectBool(true)
+
+    const propStartDelay = 144
+    let startHeight = 1
+    startHeight = block.height + propStartDelay
+    block = chain.mineBlock([
+      ede002ProposalSubmissionClient.propose(proposal, startHeight, contractEDE000, phil.address),
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+
+    if (blockHeight === 0) chain.mineEmptyBlock(startHeight + 1);
+    else chain.mineEmptyBlock(144);
+    // console.log('Block Height: ' + block.height + ' Start Height: ' + startHeight)
+    
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.vote(500, true, proposal, contractEDE000, bobby.address)
+    ]);
+    block.receipts[0].result.expectOk().expectBool(true)
+    
+    chain.mineEmptyBlock(1585);  
+    block = chain.mineBlock([
+      ede001ProposalVotingClient.conclude(proposal, ward.address)
+    ]);
+    // block.receipts[0].result.expectOk().expectBool(true)
+    return block
+}
+
+setup = (chain: Chain, accounts: Map<string, Account>): {
     administrator: Account;
     deployer: Account;
     phil: Account;
@@ -74,6 +74,9 @@ export class Utils {
     ward: Account;
     contractEXD: string;
     contractEDP000: string;
+    contractEDP000_1: string;
+    contractEDP000_2: string;
+    contractEDP000_3: string;
     contractEDP001: string;
     contractEDP001_1: string;
     contractEDP002: string;
@@ -107,6 +110,9 @@ export class Utils {
     const deployer = accounts.get("deployer")!;
     const contractEXD = accounts.get("deployer")!.address + '.executor-dao';
     const contractEDP000 = accounts.get("deployer")!.address + '.edp000-bootstrap';
+    const contractEDP000_1 = accounts.get("deployer")!.address + '.edp000-1-set-transfer-lock';
+    const contractEDP000_2 = accounts.get("deployer")!.address + '.edp000-2-unset-transfer-lock';
+    const contractEDP000_3 = accounts.get("deployer")!.address + '.edp000-3-transfer';
     const contractEDP001 = accounts.get("deployer")!.address + '.edp001-dev-fund';
     const contractEDP001_1 = accounts.get("deployer")!.address + '.edp001-1-dev-fund';
     const contractEDP002 = accounts.get("deployer")!.address + '.edp002-kill-emergency-execute';
@@ -150,6 +156,9 @@ export class Utils {
         ward, 
         contractEXD, 
         contractEDP000, 
+        contractEDP000_1, 
+        contractEDP000_2, 
+        contractEDP000_3, 
         contractEDP001, 
         contractEDP001_1, 
         contractEDP002, 

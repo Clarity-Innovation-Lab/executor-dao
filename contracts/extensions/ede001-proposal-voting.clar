@@ -131,8 +131,16 @@
 		(asserts! (>= block-height (get end-block-height proposal-data)) err-end-block-height-not-reached)
 		(map-set proposals (contract-of proposal) (merge proposal-data {concluded: true, passed: passed}))
 		(print {event: "conclude", proposal: proposal, passed: passed})
-		(and passed (try! (contract-call? .executor-dao execute proposal tx-sender)))
-		(ok passed)
+		(if passed
+			(if (is-ok (contract-call? .executor-dao execute proposal tx-sender))
+				(ok passed)
+				(begin
+					(map-set proposals (contract-of proposal) (merge proposal-data {concluded: true, passed: false}))
+					(ok false)
+				)
+			)
+			(ok false)
+		)
 	)
 )
 

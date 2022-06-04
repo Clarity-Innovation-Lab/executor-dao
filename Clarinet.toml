@@ -57,7 +57,19 @@ depends_on = ["executor-dao", "governance-token-trait", "sip010-ft-trait"]
 
 [contracts.edp001-1-dev-fund]
 path = "tests/proposals/edp001-1-dev-fund.clar"
-depends_on = ["ede000-governance-token", "executor-dao"]
+depends_on = ["proposal-trait"]
+
+[contracts.edp000-1-set-transfer-lock]
+path = "tests/proposals/edp000-1-set-transfer-lock.clar"
+depends_on = ["proposal-trait"]
+
+[contracts.edp000-2-unset-transfer-lock]
+path = "tests/proposals/edp000-2-unset-transfer-lock.clar"
+depends_on = ["proposal-trait"]
+
+[contracts.edp000-3-transfer]
+path = "tests/proposals/edp000-3-transfer.clar"
+depends_on = ["proposal-trait"]
 
 [contracts.edp005-dao-change-sample-config]
 path = "tests/proposals/edp005-dao-change-sample-config.clar"
