@@ -14,12 +14,7 @@
 (define-public (execute (sender principal))
 	(begin
 		;; Change governance token.
-<<<<<<< HEAD:tests/proposals/edp008-1-manage-nft-escrow.clar
-		(try! (contract-call? .nft-escrow set-allowed 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sip009-nft true))
-=======
 		(try! (contract-call? .nft-escrow set-allowlisted 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sip009-nft true))
->>>>>>> main:tests/proposals/edp008-1-allowlist-nft-escrow.clar
-
 		(print "Unit Test: ExecutorDAO emergency executive extension settings updated.")
 		(ok true)
 	)
