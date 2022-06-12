@@ -19,8 +19,13 @@ Clarinet.test({
 
     utils.constructDao(chain, contractEDP000, deployer, exeDaoClient)
     exeDaoClient.isExtension(contractNftEscrow).result.expectBool(false)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(false)
     nftEscrowClient.isAllowed(contractNft).result.expectBool(false)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(false)
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(false)
+>>>>>>> main
   }
 });
 
@@ -38,13 +43,22 @@ Clarinet.test({
 
     utils.constructDao(chain, contractEDP000, deployer, exeDaoClient)
     const block = chain.mineBlock([
+<<<<<<< HEAD
       nftEscrowClient.setAllowed(contractNft, true, phil.address),
       nftEscrowClient.setAllowed(contractNft, true, deployer.address)
+=======
+      nftEscrowClient.setAllowlisted(contractNft, true, phil.address),
+      nftEscrowClient.setAllowlisted(contractNft, true, deployer.address)
+>>>>>>> main
     ]);
     block.receipts[0].result.expectErr().expectUint(NftEscrowErrorCode.err_not_contract_owner)
     block.receipts[1].result.expectOk().expectBool(true)
 
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
   }
 });
 
@@ -63,12 +77,20 @@ Clarinet.test({
     utils.constructDao(chain, contractEDP000, deployer, exeDaoClient)
     const block = chain.mineBlock([
       nftEscrowClient.setContractOwner(contractEXD, deployer.address),
+<<<<<<< HEAD
       nftEscrowClient.setAllowed(contractNft, true, deployer.address),
+=======
+      nftEscrowClient.setAllowlisted(contractNft, true, deployer.address),
+>>>>>>> main
     ]);
     block.receipts[0].result.expectOk().expectBool(true)
     block.receipts[1].result.expectErr().expectUint(NftEscrowErrorCode.err_not_contract_owner)
 
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(false)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(false)
+>>>>>>> main
   }
 });
 
@@ -93,7 +115,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
 
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
   }
 });
 
@@ -129,7 +155,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
 
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
     nftClient.getOwner(1).result.expectOk().expectSome().expectPrincipal(daisy.address)
     nftClient.getOwner(2).result.expectOk().expectSome().expectPrincipal(bobby.address)
   }
@@ -168,7 +198,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
 
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
 
     block = chain.mineBlock([
       nftEscrowClient.placeInEscrow(1, bobby.address, 100, contractNft, daisy.address)
@@ -212,7 +246,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
 
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
 
     block = chain.mineBlock([
       nftEscrowClient.placeInEscrow(1, bobby.address, 100, contractNft, daisy.address)
@@ -262,7 +300,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
 
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
 
     block = chain.mineBlock([
       nftEscrowClient.placeInEscrow(1, daisy.address, 100, contractNft, daisy.address)
@@ -301,7 +343,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
 
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
 
     block = chain.mineBlock([
       nftEscrowClient.placeInEscrow(1, daisy.address, 100, contractNft, daisy.address),
@@ -342,7 +388,11 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true)
 
     utils.passProposal(block.height, chain, accounts, contractEDP008_1)
+<<<<<<< HEAD
     nftEscrowClient.isAllowed(contractNft).result.expectBool(true)
+=======
+    nftEscrowClient.isAllowlisted(contractNft).result.expectBool(true)
+>>>>>>> main
 
     block = chain.mineBlock([
       nftEscrowClient.placeInEscrow(1, daisy.address, 100, contractNft, daisy.address),
