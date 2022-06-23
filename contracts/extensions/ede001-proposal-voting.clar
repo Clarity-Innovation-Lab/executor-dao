@@ -211,6 +211,7 @@
 				(merge proposal-data {votes-against: (- proxy-votes  votes)})
 			)
 		)
+		(print {event: "rescind", who: tx-sender, proxy: proxy, amount: amount, proposal: proposal, governance-token: token-principal})
 		(try! (contract-call? governance-token edg-unlock votes proxy))
 		(try! (contract-call? governance-token edg-rescind votes proxy))
 		(ok votes)

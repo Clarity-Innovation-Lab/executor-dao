@@ -133,16 +133,17 @@ Clarinet.test({
       ede001ProposalVotingClient.rescindVotes(300, true, ward.address, contractEDP003, contractEDE000, daisy.address),
       ede001ProposalVotingClient.rescindVotes(1, true, ward.address, contractEDP003, contractEDE000, daisy.address)
     ]);
-    //console.log(block.receipts[3])
+    // console.log(block.receipts[0])
     block.receipts[0].result.expectOk().expectUint(25)
     block.receipts[1].result.expectOk().expectUint(25)
     block.receipts[2].result.expectOk().expectUint(25)
     block.receipts[3].result.expectOk().expectUint(225)
     block.receipts[4].result.expectErr().expectUint(EDE001ProposalVotingErrCode.err_rescinding_more_than_cast)
 
-    assert(block.receipts[0].events[0].ft_burn_event.amount == 25) 
-    assert(block.receipts[0].events[1].ft_mint_event.amount == 25)
-    assert(block.receipts[0].events[2].ft_transfer_event.amount == 25)
+    assert(block.receipts[0].events[0].contract_event.contract_identifier === 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.ede001-proposal-voting') 
+    assert(block.receipts[0].events[1].ft_burn_event.amount == 25) 
+    assert(block.receipts[0].events[2].ft_mint_event.amount == 25)
+    assert(block.receipts[0].events[4].ft_transfer_event.amount == 25)
 
     assertProposal(false, false, 0, 0, 289, 1729, phil.address, contractEDP003, ede001ProposalVotingClient)
 
@@ -261,9 +262,9 @@ Clarinet.test({
       ede001ProposalVotingClient.rescindVotes(25, true, ward.address, contractEDP005, contractEDE000, daisy.address),
     ]);
     //console.log(block.receipts[3])
-    assert(block.receipts[0].events.length == 3)
-    assert(block.receipts[1].events.length == 3)
-    assert(block.receipts[2].events.length == 3)
+    assert(block.receipts[0].events.length == 5)
+    assert(block.receipts[1].events.length == 5)
+    assert(block.receipts[2].events.length == 5)
 
     assertProposal(false, false, 275, 0, 289, 1729, phil.address, contractEDP003, ede001ProposalVotingClient)
     assertProposal(false, false, 0, 275, 289, 1729, phil.address, contractEDP004, ede001ProposalVotingClient)
