@@ -4,7 +4,7 @@ authors = []
 description = ""
 telemetry = false
 requirements = []
-costs_version = 2
+repl.costs_version = 2
 [contracts.ede000-governance-token]
 path = "contracts/extensions/ede000-governance-token.clar"
 depends_on = ["executor-dao", "governance-token-trait", "sip010-ft-trait"]
