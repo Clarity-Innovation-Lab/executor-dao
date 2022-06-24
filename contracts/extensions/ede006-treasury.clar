@@ -70,14 +70,14 @@
 
 ;; SIP009
 
-(define-public (sip009-transfer (amount uint) (recipient principal) (asset <sip009-transferable>))
+(define-public (sip009-transfer (token-id uint) (recipient principal) (asset <sip009-transferable>))
 	(begin
 		(try! (is-dao-or-extension))
-		(as-contract (contract-call? asset transfer amount tx-sender recipient))
+		(as-contract (contract-call? asset transfer token-id tx-sender recipient))
 	)
 )
 
-(define-public (sip009-transfer-many (data (list 200 {amount: uint, recipient: principal})) (asset <sip009-transferable>))
+(define-public (sip009-transfer-many (data (list 200 {token-id: uint, recipient: principal})) (asset <sip009-transferable>))
 	(begin
 		(as-contract (fold sip009-transfer-many-iter data asset))
 		(ok true)
@@ -136,9 +136,9 @@
 	)
 )
 
-(define-private (sip009-transfer-many-iter (data {amount: uint, recipient: principal}) (asset <sip009-transferable>))
+(define-private (sip009-transfer-many-iter (data {token-id: uint, recipient: principal}) (asset <sip009-transferable>))
 	(begin
-		(unwrap-panic (contract-call? asset transfer (get amount data) tx-sender (get recipient data)))
+		(unwrap-panic (contract-call? asset transfer (get token-id data) tx-sender (get recipient data)))
 		asset
 	)
 )
