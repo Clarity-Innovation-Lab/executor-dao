@@ -7,7 +7,7 @@
 ;; An extension contract that is meant to hold tokens on behalf of the
 ;; DAO. It can hold and transfer STX, SIP009, SIP010, and SIP013 tokens.
 ;; They can be deposited by simply transferring them to the contract.
-;; Any extension of executing proposal can trigger transfers.
+;; Any extension or executing proposal can trigger transfers.
 ;; Technically, the ExecutorDAO core can hold and transfer tokens
 ;; directly. The treasury extension merely adds a bit of separation.
 
