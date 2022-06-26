@@ -131,6 +131,7 @@
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) err-not-token-owner)
 		;; not allowed to transfer delegated tokens
 		(asserts! (>= (- (ft-get-balance edg-token sender) (unwrap! (edg-get-total-delegated sender) err-insufficient-undelegated-tokens)) amount) err-insufficient-undelegated-tokens)
+		(match memo to-print (print to-print) 0x)
 		(ft-transfer? edg-token amount sender recipient)
 	)
 )

@@ -2,6 +2,7 @@
 import { Clarinet, Chain, Account } from "https://deno.land/x/clarinet@v0.28.1/index.ts";
 import { EDE000GovernanceTokenErrCode } from "./src/ede000-governance-token-client.ts";
 import { Utils } from "./src/utils.ts";
+import { assert } from "https://deno.land/std@0.90.0/testing/asserts.ts";
 
 const utils = new Utils();
 
@@ -54,6 +55,7 @@ Clarinet.test({
         ede000GovernanceTokenClient.transfer(100, bobby.address, daisy.address, "for new batons", bobby.address),
       ]);
       block.receipts[0].result.expectOk().expectBool(true)
+      assert(block.receipts[0].events[0].contract_event.value === '0x666f72206e6577206261746f6e73')
       ede000GovernanceTokenClient.edgGetBalance(bobby.address).result.expectOk().expectUint(900)
       ede000GovernanceTokenClient.edgGetBalance(daisy.address).result.expectOk().expectUint(1100)
       ede000GovernanceTokenClient.edgGetLocked(bobby.address).result.expectOk().expectUint(0)
