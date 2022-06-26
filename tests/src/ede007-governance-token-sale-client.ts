@@ -8,8 +8,14 @@ import {
 
 export enum EDE007GovernanceTokenSaleErrCode {
   err_unauthorised=3000,
-  err_no_allowance=3001,
-  err_already_claimed=3002
+  err_sale_already_started=3001,
+  err_sale_ended=3002,
+  err_sale_not_ended=3003,
+  err_nothing_to_refund=3004,
+  err_sale_succeeded=3005,
+  err_maximum_amount_exceeded=3006,
+  err_nothing_to_claim=3007,
+  err_sale_failed=3008
 }
 
 export class EDE007GovernanceTokenSaleClient {
@@ -23,15 +29,48 @@ export class EDE007GovernanceTokenSaleClient {
     this.deployer = deployer;
   }
 
-  setAllowanceStartHeight(height: number, txSender: string): Tx {
+  start(txSender: string): Tx {
     return Tx.contractCall(
       this.contractName,
-      "set-allowance-start-height",
-      [types.uint(height)], txSender);
+      "start",
+      [], txSender);
   }
 
-  getDeveloperAllowance(who: string): ReadOnlyFn {
-    return this.callReadOnlyFn("get-developer-allowance", [types.principal(who)]);
+  buy(amount: number, txSender: string): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "buy",
+      [types.uint(amount)], txSender);
+  }
+
+  claim(txSender: string): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "claim",
+      [], txSender);
+  }
+
+  refund(txSender: string): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "refund",
+      [], txSender);
+  }
+
+  getStartHeight(): ReadOnlyFn {
+    return this.callReadOnlyFn("get-start-height", []);
+  }
+
+  getEndHeight(): ReadOnlyFn {
+    return this.callReadOnlyFn("get-end-height", []);
+  }
+
+  getTotalAllocation(): ReadOnlyFn {
+    return this.callReadOnlyFn("get-total-allocation", []);
+  }
+
+  getUnclaimedAllocation(who: string): ReadOnlyFn {
+    return this.callReadOnlyFn("get-unclaimed-allocation", [types.principal(who)]);
   }
 
   private callReadOnlyFn(

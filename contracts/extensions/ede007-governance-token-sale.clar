@@ -14,7 +14,7 @@
 (impl-trait .extension-trait.extension-trait)
 
 (define-constant price-per-token u100000) ;; Price per token in mSTX, u100000 = 0.1 STX per token.
-(define-constant sale-duration u432) ;; Sale duration in block time, u432 is roughly three weeks.
+(define-constant sale-duration u432) ;; Sale duration in block time, u432 is roughly three days.
 
 (define-constant minimum-sale-amount u0) ;; Minimum number of tokens to sell for the sale to be successful.
 (define-constant maximum-sale-amount u0) ;; Maximum number of tokens for sale, or 0 for no limit.
