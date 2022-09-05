@@ -23,6 +23,7 @@
 (define-constant err-proposal-inactive (err u3005))
 (define-constant err-insufficient-voting-capacity (err u3006))
 (define-constant err-end-block-height-not-reached (err u3007))
+(define-constant err-no-voting-capacity (err u3008))
 
 (define-map proposals
 	principal
@@ -87,7 +88,7 @@
 		(asserts! (>= block-height (get start-block-height proposal-data)) err-proposal-inactive)
 		(asserts! (< block-height (get end-block-height proposal-data)) err-proposal-inactive)
 		(asserts!
-			(<= new-total-votes (unwrap! (get-total-vote-capacity tx-sender (get start-block-height proposal-data)) err-proposal-inactive))
+			(<= new-total-votes (unwrap! (get-total-vote-capacity tx-sender (get start-block-height proposal-data)) err-no-voting-capacity))
 			err-insufficient-voting-capacity
 		)
 		(map-set member-total-votes {proposal: proposal, voter: tx-sender} new-total-votes)
